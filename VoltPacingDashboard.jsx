@@ -1,0 +1,1300 @@
+import React, { useState, useMemo, useEffect } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
+} from "recharts";
+import {
+  ArrowUp, ArrowDown, AlertTriangle, Check, Circle, Search,
+  ArrowUpDown, X, Sun, Moon, RefreshCw,
+} from "lucide-react";
+
+/* ======================================================================
+   VOLT MAIN PACING — Editorial Bento Dashboard
+   Design system: Fraunces (display serif) + Inter (data), warm paper
+   palette, bento mosaic layout, light + dark. Data is a snapshot of the
+   Google Sheet — use the Refresh tile for how to update it.
+   ====================================================================== */
+
+const RAW=[
+{client:"MBET",campaign:"Always On (Generic)",platform:"Meta",okr:"Registration",budget:25000,cost:21358.2,results:2649,forecastSpend:24917.9,forecastPct:1,daysRemaining:4,currentDaily:889.92,recDaily:910.46,targetCost:10,costPerResult:8.06,status:"Active",group:"MBET",am:"",comment:""},
+{client:"MBET",campaign:"Always On (Generic)",platform:"Meta",okr:"LPV",budget:2000,cost:1726.3,results:2979,forecastSpend:2014.02,forecastPct:1.01,daysRemaining:4,currentDaily:71.93,recDaily:68.43,targetCost:10,costPerResult:0.58,status:"Active",group:"MBET",am:"",comment:""},
+{client:"MBET",campaign:"Always On (Casino)",platform:"Meta",okr:"Page Like",budget:2000,cost:1726.18,results:734,forecastSpend:2013.88,forecastPct:1.01,daysRemaining:4,currentDaily:71.92,recDaily:68.46,targetCost:5,costPerResult:2.35,status:"Active",group:"MBET",am:"",comment:""},
+{client:"MBET",campaign:"Always On (Generic)",platform:"Search",okr:"Registration",budget:14000,cost:12107.1,results:920.54,forecastSpend:14125,forecastPct:1.01,daysRemaining:4,currentDaily:504.46,recDaily:473.22,targetCost:10,costPerResult:13.15,status:"Active",group:"MBET",am:"",comment:""},
+{client:"MBET",campaign:"Always On (Generic)",platform:"P-Max",okr:"Registration",budget:16000,cost:13912.1,results:1481,forecastSpend:16230.7,forecastPct:1.01,daysRemaining:4,currentDaily:579.67,recDaily:521.99,targetCost:15,costPerResult:9.39,status:"Active",group:"MBET",am:"",comment:""},
+{client:"MBET",campaign:"Always On (Casino)",platform:"Meta",okr:"LPV",budget:15800,cost:12071.2,results:1797,forecastSpend:15290.2,forecastPct:0.97,daysRemaining:4,currentDaily:804.75,recDaily:932.2,targetCost:15,costPerResult:6.72,status:"Active",group:"MBET",am:"",comment:""},
+{client:"CTIJF",campaign:"Jazz Festival (Prospecting)",platform:"Meta",okr:"Reach",budget:10000,cost:106.81,results:1,forecastSpend:3524.73,forecastPct:0.35,daysRemaining:32,currentDaily:106.81,recDaily:309.16,targetCost:15,costPerResult:106.81,status:"Active",group:"CTIJF",am:"",comment:""},
+{client:"CTIJF",campaign:"Jazz Festival (Remarketing)",platform:"Meta",okr:"Reach",budget:10000,cost:106.81,results:1,forecastSpend:3524.73,forecastPct:0.35,daysRemaining:32,currentDaily:106.81,recDaily:309.16,targetCost:15,costPerResult:106.81,status:"Active",group:"CTIJF",am:"",comment:""},
+{client:"Fair Price",campaign:"Always On",platform:"Meta",okr:"Ad Recall",budget:8000,cost:6850.12,results:26800,forecastSpend:7991.81,forecastPct:1,daysRemaining:4,currentDaily:285.42,recDaily:287.47,targetCost:15,costPerResult:0.26,status:"Active",group:"Fair Price",am:"",comment:""},
+{client:"Fair Price",campaign:"Always On (Cell B)",platform:"Meta",okr:"LPV",budget:12000,cost:10821.6,results:29472,forecastSpend:12625.2,forecastPct:1.05,daysRemaining:4,currentDaily:450.9,recDaily:294.61,targetCost:15,costPerResult:0.37,status:"Active",group:"Fair Price",am:"",comment:""},
+{client:"Fair Price",campaign:"Always On Pros",platform:"Meta",okr:"Purchase",budget:27000,cost:23190.1,results:88,forecastSpend:27055.2,forecastPct:1,daysRemaining:4,currentDaily:966.26,recDaily:952.47,targetCost:250,costPerResult:263.52,status:"Active",group:"Fair Price",am:"",comment:""},
+{client:"Fair Price",campaign:"Always On Pros (DPA)",platform:"Meta",okr:"Purchase",budget:15062.5,cost:13033.9,results:53,forecastSpend:15206.2,forecastPct:1.01,daysRemaining:4,currentDaily:543.08,recDaily:507.15,targetCost:250,costPerResult:245.92,status:"Active",group:"Fair Price",am:"",comment:""},
+{client:"Fair Price",campaign:"Remarketing Consolidated",platform:"Meta",okr:"Purchase",budget:12000,cost:10273.2,results:43,forecastSpend:11985.4,forecastPct:1,daysRemaining:4,currentDaily:428.05,recDaily:431.71,targetCost:250,costPerResult:238.91,status:"Active",group:"Fair Price",am:"",comment:""},
+{client:"Fair Price",campaign:"Awareness",platform:"DV360",okr:"CPM",budget:12937.5,cost:8152.17,results:933930,forecastSpend:9510.87,forecastPct:0.74,daysRemaining:4,currentDaily:339.67,recDaily:1196.33,targetCost:25,costPerResult:8.73,status:"Active",group:"Fair Price",am:"",comment:""},
+{client:"Fair Price",campaign:"Consideration",platform:"DV360",okr:"CPM",budget:25500,cost:19292.2,results:649826,forecastSpend:22507.5,forecastPct:0.88,daysRemaining:4,currentDaily:803.84,recDaily:1551.96,targetCost:25,costPerResult:29.69,status:"Active",group:"Fair Price",am:"",comment:""},
+{client:"Mochachos",campaign:"Always On Generic Terms",platform:"Search/P-Max",okr:"LPV",budget:17000,cost:15442,results:92933,forecastSpend:18015.7,forecastPct:1.06,daysRemaining:4,currentDaily:643.42,recDaily:389.5,targetCost:0.5,costPerResult:0.17,status:"Active",group:"Mochachos",am:"",comment:""},
+{client:"Mochachos",campaign:"Always On Competitor Terms",platform:"Search",okr:"LPV",budget:1750,cost:1590.13,results:2808,forecastSpend:1855.15,forecastPct:1.06,daysRemaining:4,currentDaily:66.26,recDaily:39.97,targetCost:0.8,costPerResult:0.57,status:"Active",group:"Mochachos",am:"",comment:""},
+{client:"Mochachos",campaign:"Always On Competitor Terms",platform:"DV360",okr:"CPM",budget:41250,cost:35989.2,results:1430581,forecastSpend:51413.1,forecastPct:1.25,daysRemaining:9,currentDaily:1713.77,recDaily:584.54,targetCost:0.8,costPerResult:0.03,status:"Active",group:"Mochachos",am:"",comment:"Overpacing - forecast 125%"},
+{client:"Vsion Co",campaign:"Always On",platform:"Meta",okr:"Lead",budget:19000,cost:11673,results:40,forecastSpend:14325.9,forecastPct:0.75,daysRemaining:5,currentDaily:530.59,recDaily:1465.4,targetCost:80,costPerResult:291.83,status:"Active",group:"Vsion Co",am:"",comment:"Cost per lead far over target"},
+{client:"Cosave Pretoria",campaign:"Always On",platform:"Meta",okr:"Purchase",budget:42437,cost:4383.33,results:0,forecastSpend:null,forecastPct:null,daysRemaining:23,currentDaily:null,recDaily:1654.51,targetCost:250,costPerResult:null,status:"Active",group:"Cosave",am:"",comment:"Source date error - forecast unusable"},
+{client:"Cosave Witbank",campaign:"Always On",platform:"Meta",okr:"Purchase",budget:17337.2,cost:1327.98,results:0,forecastSpend:null,forecastPct:null,daysRemaining:23,currentDaily:null,recDaily:696.05,targetCost:250,costPerResult:null,status:"Active",group:"Cosave",am:"",comment:"Source date error - forecast unusable"},
+{client:"Cosave Secunda",campaign:"Always On",platform:"Meta",okr:"Purchase",budget:17753.2,cost:1812.18,results:0,forecastSpend:null,forecastPct:null,daysRemaining:23,currentDaily:null,recDaily:693.09,targetCost:250,costPerResult:null,status:"Active",group:"Cosave",am:"",comment:"Source date error - forecast unusable"},
+{client:"IOL",campaign:"AFDA (STADIO) Content & Boosting",platform:"TIKTOK",okr:"LPV",budget:1000,cost:908.17,results:41830,forecastSpend:1051.57,forecastPct:1.05,daysRemaining:3,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adiela",comment:""},
+{client:"Stadio",campaign:"STADIO S1 Paid Social",platform:"META",okr:"Link Click",budget:17500,cost:12165.3,results:12132,forecastSpend:18248,forecastPct:1.04,daysRemaining:10,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:""},
+{client:"Stadio",campaign:"STADIO S1 Paid Social",platform:"TIKTOK",okr:"Link Click",budget:6500,cost:3190.2,results:14734,forecastSpend:6836.14,forecastPct:1.05,daysRemaining:16,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:""},
+{client:"Mochachos",campaign:"February Paid Social",platform:"META",okr:"Link Click",budget:23000,cost:13702.8,results:26068,forecastSpend:20914.9,forecastPct:0.91,daysRemaining:10,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:""},
+{client:"Mochachos",campaign:"February Paid Social",platform:"TIKTOK",okr:"Link Click",budget:7000,cost:3315.5,results:12016,forecastSpend:7396.12,forecastPct:1.06,daysRemaining:16,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:""},
+{client:"Patio Warehouse",campaign:"February Paid Social",platform:"META",okr:"Link Click",budget:20250,cost:13398.6,results:22749,forecastSpend:21155.7,forecastPct:1.04,daysRemaining:11,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:""},
+{client:"WH Auctions",campaign:"Triple Eight Media",platform:"TIKTOK",okr:"LPV",budget:1000,cost:915.73,results:35716,forecastSpend:1082.23,forecastPct:1.08,daysRemaining:2,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:""},
+{client:"IOL",campaign:"STADIO S1 IOL News Content",platform:"META",okr:"LPV",budget:1000,cost:851.47,results:353,forecastSpend:1094.75,forecastPct:1.09,daysRemaining:2,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:""},
+{client:"WH Auctions",campaign:"Cape Town Monthly Paid Social",platform:"META",okr:"Engagements",budget:3500,cost:2800.37,results:6205,forecastSpend:3733.83,forecastPct:1.07,daysRemaining:2,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:""},
+{client:"WH Auctions",campaign:"Cape Town Monthly Paid Social",platform:"TIKTOK",okr:"Engagements",budget:1000,cost:10.47,results:402,forecastSpend:null,forecastPct:0,daysRemaining:8,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:"Pending - no spend data"},
+{client:"WH Auctions",campaign:"Midrand Monthly Paid Social",platform:"META",okr:"Link Click",budget:5625,cost:5568.77,results:7009,forecastSpend:6682.52,forecastPct:1.19,daysRemaining:1,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:"Overpacing - forecast 119%"},
+{client:"IOL",campaign:"TVV Consulting YESIM article",platform:"META",okr:"LPV",budget:5500,cost:1613.38,results:880,forecastSpend:5808.17,forecastPct:1.06,daysRemaining:13,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:""},
+{client:"IOL",campaign:"TVV Consulting YESIM article",platform:"TIKTOK",okr:"LPV",budget:2000,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:16,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Adrian",comment:"Pending - no spend yet"},
+{client:"IOL Motoring",campaign:"Toyota Fortuner Challenge P1",platform:"META",okr:"Engagements",budget:1312,cost:722.5,results:570,forecastSpend:1402.5,forecastPct:1.07,daysRemaining:16,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"andre",comment:""},
+{client:"IOL",campaign:"Toyota Fortuner Challenge P1",platform:"META",okr:"Engagements",budget:1312,cost:213.11,results:158,forecastSpend:1349.7,forecastPct:1.03,daysRemaining:16,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"andre",comment:""},
+{client:"Isolezwe",campaign:"AG Incorporated SM + boost",platform:"META",okr:"Engagements",budget:500,cost:404.18,results:2589,forecastSpend:525.43,forecastPct:1.05,daysRemaining:6,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Ashika",comment:""},
+{client:"ALL Titles",campaign:"Blue Rock Holdings SM + boost",platform:"META",okr:"Engagements",budget:1125,cost:493.71,results:1323,forecastSpend:1316.56,forecastPct:1.17,daysRemaining:5,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Basheer",comment:"Overpacing - forecast 117%"},
+{client:"IOL",campaign:"ABSA Car Give Away",platform:"META",okr:"LPV",budget:1000,cost:857.77,results:857.77,forecastSpend:1072.21,forecastPct:1.07,daysRemaining:3,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Bianca",comment:""},
+{client:"IOL",campaign:"ABSA Car Give Away",platform:"TIKTOK",okr:"LPV",budget:1600,cost:704.1,results:6490,forecastSpend:1760.25,forecastPct:1.1,daysRemaining:9,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Bianca",comment:""},
+{client:"GQ",campaign:"Nivea for Men Native Podcast SM",platform:"META",okr:"LPV",budget:1000,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:7,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Charlotte",comment:"Pending - no spend yet"},
+{client:"Daily Voice",campaign:"Intombi Promotional Gifts",platform:"META",okr:"Engagements",budget:1125,cost:632.36,results:31337,forecastSpend:1264.72,forecastPct:1.12,daysRemaining:6,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Chuma",comment:""},
+{client:"Isolezwe",campaign:"Curtain Master SM FB/X",platform:"META",okr:"Engagements",budget:375,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:3,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Collin",comment:"Pending - no spend yet"},
+{client:"IOL",campaign:"Asset Auctions Social",platform:"META",okr:"Engagements",budget:750,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:18,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"connie",comment:"Pending - no spend yet"},
+{client:"IOL",campaign:"Peter Maskells IOL FB+X+Boost",platform:"META",okr:"Engagements",budget:3750,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:36,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Cyril",comment:"Pending - no spend yet"},
+{client:"DFA",campaign:"Boston City Campus SM + Boost",platform:"META",okr:"Engagements",budget:375,cost:277.69,results:356,forecastSpend:416.54,forecastPct:1.11,daysRemaining:5,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Elzeri",comment:""},
+{client:"DFA",campaign:"A Manuel Social Media + Boost",platform:"META",okr:"Engagements",budget:456.57,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:3,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Elzeri",comment:"Pending - no spend yet"},
+{client:"IOL",campaign:"FC IOL Jan26 Content & Social",platform:"META",okr:"Engagements",budget:2250,cost:323.08,results:211,forecastSpend:2369.25,forecastPct:1.05,daysRemaining:19,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Erinn",comment:""},
+{client:"Tabletalk",campaign:"Melkbos Private School",platform:"META",okr:"Engagements",budget:750,cost:351.11,results:763,forecastSpend:702.22,forecastPct:0.94,daysRemaining:4,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"jannie",comment:""},
+{client:"The Star",campaign:"St Benedict College Social",platform:"META",okr:"Engagements",budget:375,cost:357.89,results:1858,forecastSpend:391.97,forecastPct:1.05,daysRemaining:2,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Kim",comment:""},
+{client:"Isolezwe",campaign:"Sumote Holdings Social",platform:"META",okr:"Engagements",budget:375,cost:253.67,results:8713,forecastSpend:401.64,forecastPct:1.07,daysRemaining:7,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Kim",comment:""},
+{client:"All Titles",campaign:"Rand Water Encroachment",platform:"META",okr:"Engagements",budget:2012.5,cost:547.56,results:5321,forecastSpend:2190.24,forecastPct:1.09,daysRemaining:21,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Michael",comment:""},
+{client:"Business Report",campaign:"BEERSA Excise Campaign",platform:"META",okr:"LPV",budget:5250,cost:1451.43,results:687,forecastSpend:5442.86,forecastPct:1.04,daysRemaining:11,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Munashe",comment:""},
+{client:"IOL",campaign:"Dotsure Feb IOL content",platform:"META",okr:"LPV",budget:375,cost:363.62,results:1879,forecastSpend:415.57,forecastPct:1.11,daysRemaining:1,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Mymoena",comment:""},
+{client:"IOL Motoring",campaign:"FotonSA Sponsored article",platform:"META",okr:"LPV",budget:1000,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:29,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Mymoena",comment:"Pending - no spend yet"},
+{client:"IOL Motoring",campaign:"FotonSA Sponsored article",platform:"TIKTOK",okr:"LPV",budget:500,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:29,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Mymoena",comment:"Pending - no spend yet"},
+{client:"IOL Lifestyle",campaign:"Kingdom of Ubuntu Music Festival",platform:"META",okr:"LPV",budget:3750,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:null,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Mymoena",comment:"Pending - no data"},
+{client:"IOL Travel",campaign:"MSC Display/Social",platform:"META",okr:"Link Click",budget:5750,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:6,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Paula",comment:"Pending - no spend yet"},
+{client:"IOL Travel",campaign:"MSC Display/Social",platform:"TIKTOK",okr:"Link Click",budget:1000,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:6,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Paula",comment:"Pending - no spend yet"},
+{client:"DFA",campaign:"Frances Baard Social DFA",platform:"META",okr:"Engagements",budget:375,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:34,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Sally",comment:"Pending - no spend yet"},
+{client:"DFA",campaign:"LUSA Wellness Centre Social",platform:"META",okr:"Link Click",budget:277.5,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:6,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Sally",comment:"Pending - no spend yet"},
+{client:"IOL Lifestyle",campaign:"PLM Golden Lodge SM + Boost",platform:"META",okr:"Engagements",budget:375,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:15,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Selvaranie",comment:"Pending - no spend yet"},
+{client:"Isolezwe",campaign:"Hypercheck Checkrite Isolezwe",platform:"META",okr:"Engagements",budget:375,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:3,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Sharmaine",comment:"Pending - no spend yet"},
+{client:"Daily Voice",campaign:"Racecoast Racing Social Media",platform:"META",okr:"Link Click",budget:3000,cost:0,results:0,forecastSpend:null,forecastPct:0,daysRemaining:4,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Shevon",comment:"Pending - no spend yet"},
+{client:"Sunday Tribune",campaign:"Peter Maskell Social + DV360",platform:"META",okr:"Engagements",budget:500,cost:409.76,results:1350,forecastSpend:546.35,forecastPct:1.09,daysRemaining:7,currentDaily:null,recDaily:null,targetCost:null,costPerResult:null,status:"Active",group:"Volt Roster",am:"Wendy",comment:""}
+];
+
+/* ---------------- DESIGN SYSTEM ---------------- */
+const THEMES = {
+  light: {
+    paper: "#f1ece1", panel: "#fbf9f4", panelAlt: "#f5f1e8",
+    ink: "#211e1a", inkSoft: "#6f6960", inkFaint: "#9c958a",
+    line: "#ddd6c7", lineSoft: "#e8e2d5",
+    accent: "#bf5a36", accentSoft: "#f0d9cf",
+    shadow: "0 1px 2px rgba(33,30,26,.04), 0 6px 16px -8px rgba(33,30,26,.10)",
+    good: "#3f7d56", over: "#c0452f", under: "#3f6d9e", pending: "#94897a", broken: "#b07d1a",
+    goodBg: "#e3ecdf", overBg: "#f3ddd6", underBg: "#dee7f0", pendingBg: "#e9e4d8", brokenBg: "#f1e6cf",
+  },
+  dark: {
+    paper: "#161412", panel: "#211e1b", panelAlt: "#28241f",
+    ink: "#f0ebe1", inkSoft: "#a39c8e", inkFaint: "#6f685c",
+    line: "#34302a", lineSoft: "#2c2823",
+    accent: "#e5734a", accentSoft: "#3a2a22",
+    shadow: "0 2px 14px -6px rgba(0,0,0,.6)",
+    good: "#6dbd8a", over: "#e8705a", under: "#6f9fce", pending: "#9c9080", broken: "#d6a843",
+    goodBg: "#22302a", overBg: "#352421", underBg: "#222c36", pendingBg: "#2a2620", brokenBg: "#332b1c",
+  },
+};
+
+const STATUS = {
+  onTarget: { key: "good", label: "On target", Icon: Check },
+  over:     { key: "over", label: "Over-pacing", Icon: ArrowUp },
+  under:    { key: "under", label: "Under-pacing", Icon: ArrowDown },
+  pending:  { key: "pending", label: "No data yet", Icon: Circle },
+  broken:   { key: "broken", label: "Data error", Icon: AlertTriangle },
+};
+
+const ZAR = (n) => n == null || isNaN(n) ? "—" : "R" + Math.round(n).toLocaleString("en-ZA");
+const ZARk = (n) => n == null || isNaN(n) ? "—"
+  : n >= 1000 ? "R" + (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k"
+  : "R" + Math.round(n);
+const ZAR2 = (n) => n == null || isNaN(n) ? "—"
+  : "R" + n.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const PCT = (n) => n == null || isNaN(n) ? "—" : Math.round(n * 100) + "%";
+const NUM = (n) => n == null || isNaN(n) ? "—" : Math.round(n).toLocaleString("en-ZA");
+
+function classify(r) {
+  if (r.comment && r.comment.toLowerCase().includes("error")) return "broken";
+  if (r.forecastSpend == null || r.forecastPct === 0 || r.cost === 0) return "pending";
+  if (r.forecastPct > 1.1) return "over";
+  if (r.forecastPct < 0.9) return "under";
+  return "onTarget";
+}
+
+/* ====================== MAIN ====================== */
+export default function VoltPacing() {
+  const [dark, setDark] = useState(false);
+  const [tab, setTab] = useState("pacing");
+  const [q, setQ] = useState("");
+  const [sortKey, setSortKey] = useState("forecastPct");
+  const [sortDir, setSortDir] = useState("desc");
+  const [detail, setDetail] = useState(null);
+  const [modal, setModal] = useState(null);
+  const T = dark ? THEMES.dark : THEMES.light;
+
+  const rows = useMemo(() => RAW.map((r) => ({ ...r, _k: classify(r) })), []);
+
+  const totals = useMemo(() => {
+    const t = { budget: 0, cost: 0, forecast: 0, fc: 0 };
+    rows.forEach((r) => {
+      t.budget += r.budget || 0; t.cost += r.cost || 0;
+      if (r.forecastSpend != null) { t.forecast += r.forecastSpend; t.fc++; }
+    });
+    return t;
+  }, [rows]);
+
+  const counts = useMemo(() => {
+    const c = { onTarget: 0, over: 0, under: 0, pending: 0, broken: 0 };
+    rows.forEach((r) => c[r._k]++);
+    return c;
+  }, [rows]);
+
+  const byClient = useMemo(() => {
+    const m = {};
+    rows.forEach((r) => {
+      const k = r.client;
+      if (!m[k]) m[k] = { client: k, budget: 0, cost: 0, forecast: 0, n: 0, flags: 0 };
+      m[k].budget += r.budget || 0; m[k].cost += r.cost || 0;
+      if (r.forecastSpend != null) m[k].forecast += r.forecastSpend;
+      m[k].n++;
+      if (r._k === "over" || r._k === "broken" || r._k === "under") m[k].flags++;
+    });
+    return Object.values(m).sort((a, b) => b.budget - a.budget);
+  }, [rows]);
+
+  const alerts = useMemo(
+    () => rows.filter((r) => ["over", "under", "broken"].includes(r._k))
+      .sort((a, b) => (b.forecastPct || 99) - (a.forecastPct || 99)),
+    [rows]);
+
+  const filtered = useMemo(() => {
+    let f = rows;
+    if (q.trim()) {
+      const s = q.toLowerCase();
+      f = f.filter((r) => (r.client + r.campaign + r.platform + r.okr + r.am)
+        .toLowerCase().includes(s));
+    }
+    return [...f].sort((a, b) => {
+      let av = a[sortKey] ?? -Infinity, bv = b[sortKey] ?? -Infinity;
+      if (typeof av === "string")
+        return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+      return sortDir === "asc" ? av - bv : bv - av;
+    });
+  }, [rows, q, sortKey, sortDir]);
+
+  function setSort(k) {
+    if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(k); setSortDir("desc"); }
+  }
+
+  const overBudget = totals.forecast > totals.budget;
+  const ctx = { T, dark, setDetail, setModal };
+
+  return (
+    <div style={{
+      background: T.paper, color: T.ink, minHeight: "100vh",
+      fontFamily: "'Inter', -apple-system, system-ui, sans-serif",
+      transition: "background .3s, color .3s",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+        * { box-sizing: border-box; }
+        .vt-serif { font-family: 'Fraunces', Georgia, serif; }
+        .vt-tile { transition: transform .15s ease, box-shadow .15s ease; }
+        .vt-tile-i:hover { transform: translateY(-2px); cursor: pointer; }
+        .vt-row:hover { background: ${T.panelAlt} !important; }
+        ::-webkit-scrollbar { height: 9px; width: 9px; }
+        ::-webkit-scrollbar-thumb { background: ${T.line}; border-radius: 9px; }
+      `}</style>
+
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "26px 30px 60px" }}>
+        {/* ============ MASTHEAD ============ */}
+        <header style={{
+          display: "flex", justifyContent: "space-between",
+          alignItems: "flex-end", flexWrap: "wrap", gap: 16,
+          borderBottom: `2px solid ${T.ink}`, paddingBottom: 16, marginBottom: 4,
+        }}>
+          <div>
+            <div style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: 3,
+              color: T.accent, textTransform: "uppercase",
+            }}>Volt · Paid Media</div>
+            <h1 className="vt-serif" style={{
+              margin: "5px 0 0", fontSize: 44, fontWeight: 600,
+              letterSpacing: -1, lineHeight: 1,
+            }}>Pacing Review</h1>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 11, color: T.inkFaint, letterSpacing: 1,
+                textTransform: "uppercase" }}>Snapshot</div>
+              <div className="vt-serif" style={{ fontSize: 17, fontWeight: 600 }}>
+                {rows.length} campaigns live</div>
+            </div>
+            <button onClick={() => setDark(!dark)} aria-label="Toggle theme"
+              style={iconBtn(T)}>
+              {dark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          </div>
+        </header>
+        <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 22 }}>
+          Account manager view · budgets, targets &amp; pacing health across all
+          active campaigns
+        </div>
+
+        {/* ============ TABS ============ */}
+        <nav style={{ display: "flex", gap: 7, marginBottom: 20, flexWrap: "wrap" }}>
+          {[
+            ["pacing", "Pacing Health"],
+            ["budget", "Budgets & Clients"],
+            ["cost", "Cost vs Target"],
+            ["team", "Account Managers"],
+          ].map(([id, label]) => {
+            const on = tab === id;
+            return (
+              <button key={id} onClick={() => setTab(id)} style={{
+                fontFamily: "'Fraunces', serif", fontSize: 15, fontWeight: 600,
+                padding: "8px 16px", borderRadius: 999, cursor: "pointer",
+                border: `1.5px solid ${on ? T.ink : T.line}`,
+                background: on ? T.ink : "transparent",
+                color: on ? T.paper : T.inkSoft, transition: "all .15s",
+              }}>{label}</button>
+            );
+          })}
+        </nav>
+
+        {tab === "pacing" && (
+          <PacingView {...ctx} {...{ rows, totals, counts, alerts, byClient,
+            overBudget, filtered, q, setQ, sortKey, sortDir, setSort }} />
+        )}
+        {tab === "budget" && (
+          <BudgetView {...ctx} {...{ byClient, totals, overBudget }} />
+        )}
+        {tab === "cost" && <CostView {...ctx} {...{ rows }} />}
+        {tab === "team" && <TeamView {...ctx} {...{ rows }} />}
+
+        <footer style={{
+          marginTop: 36, paddingTop: 14, borderTop: `1px solid ${T.line}`,
+          fontSize: 11, color: T.inkFaint, display: "flex",
+          justifyContent: "space-between", flexWrap: "wrap", gap: 8,
+        }}>
+          <span>VOLT Main Pacing · data snapshot from Google Sheets</span>
+          <button onClick={() => setModal("refresh")} style={{
+            background: "none", border: "none", color: T.accent,
+            cursor: "pointer", fontSize: 11, fontWeight: 600, padding: 0,
+          }}>How to refresh this dashboard →</button>
+        </footer>
+      </div>
+
+      {detail && <Drawer row={detail} T={T} onClose={() => setDetail(null)} />}
+      {modal === "refresh" && <RefreshModal T={T} onClose={() => setModal(null)} />}
+    </div>
+  );
+}
+
+/* shared button style */
+function iconBtn(T) {
+  return {
+    width: 36, height: 36, borderRadius: 999, cursor: "pointer",
+    border: `1.5px solid ${T.line}`, background: T.panel, color: T.ink,
+    display: "flex", alignItems: "center", justifyContent: "center",
+  };
+}
+
+/* ====================== BENTO PRIMITIVES ====================== */
+function Tile({ T, span = 1, rowSpan = 1, pad = 18, onClick, children, accent }) {
+  return (
+    <div className={"vt-tile" + (onClick ? " vt-tile-i" : "")}
+      onClick={onClick}
+      style={{
+        gridColumn: `span ${span}`, gridRow: `span ${rowSpan}`,
+        background: T.panel, border: `1px solid ${T.line}`,
+        borderTop: accent ? `3px solid ${accent}` : `1px solid ${T.line}`,
+        borderRadius: 14, padding: pad, boxShadow: T.shadow,
+        display: "flex", flexDirection: "column", minWidth: 0,
+      }}>
+      {children}
+    </div>
+  );
+}
+
+function Eyebrow({ T, children, color }) {
+  return (
+    <div style={{
+      fontSize: 10.5, fontWeight: 700, letterSpacing: 1.4,
+      textTransform: "uppercase", color: color || T.inkFaint,
+    }}>{children}</div>
+  );
+}
+
+function StatusTag({ kind, T, big }) {
+  const s = STATUS[kind];
+  const col = T[s.key], bg = T[s.key + "Bg"];
+  const { Icon } = s;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      background: bg, color: col, fontWeight: 600,
+      fontSize: big ? 12 : 10.5, padding: big ? "5px 11px" : "3px 8px",
+      borderRadius: 999, whiteSpace: "nowrap", lineHeight: 1,
+    }}>
+      <Icon size={big ? 13 : 11} strokeWidth={2.6}
+        fill={kind === "pending" ? col : "none"} />
+      {s.label}
+    </span>
+  );
+}
+
+/* pacing gauge bar — 0 to 140%, marker at 100 */
+function Gauge({ pct, kind, T, h = 8 }) {
+  const col = kind ? T[STATUS[kind].key] : T.inkFaint;
+  const w = Math.min(Math.max(pct || 0, 0), 1.4) / 1.4 * 100;
+  return (
+    <div style={{ position: "relative", height: h, background: T.panelAlt,
+      borderRadius: 99, border: `1px solid ${T.lineSoft}` }}>
+      <div style={{ position: "absolute", top: -2, bottom: -2,
+        left: `${100 / 1.4}%`, width: 2, background: T.inkFaint,
+        borderRadius: 2 }} />
+      <div style={{ height: "100%", width: `${w}%`, background: col,
+        borderRadius: 99, transition: "width .5s ease" }} />
+    </div>
+  );
+}
+
+/* ====================== PACING VIEW ====================== */
+function PacingView({ T, rows, totals, counts, alerts, byClient, overBudget,
+  filtered, q, setQ, sortKey, sortDir, setSort, setDetail }) {
+  const pctSpent = totals.cost / totals.budget;
+  const topAlert = alerts[0];
+
+  return (
+    <>
+      {/* ===== HERO BENTO MOSAIC ===== */}
+      <div style={{
+        display: "grid", gap: 12, marginBottom: 26,
+        gridTemplateColumns: "repeat(6, 1fr)",
+        gridAutoRows: "minmax(96px, auto)",
+      }}>
+        {/* HERO — total budget, 3 wide x 2 tall */}
+        <Tile T={T} span={3} rowSpan={2} pad={24}>
+          <Eyebrow T={T} color={T.accent}>Total managed budget</Eyebrow>
+          <div className="vt-serif" style={{
+            fontSize: 68, fontWeight: 600, lineHeight: .95,
+            letterSpacing: -2, marginTop: "auto", fontVariantNumeric: "tabular-nums",
+          }}>{ZAR(totals.budget)}</div>
+          <div style={{
+            display: "flex", gap: 22, marginTop: 16, paddingTop: 16,
+            borderTop: `1px solid ${T.line}`, flexWrap: "wrap",
+          }}>
+            <MiniStat T={T} label="Spent to date" value={ZAR(totals.cost)}
+              sub={PCT(pctSpent) + " of budget"} />
+            <MiniStat T={T} label="Forecast spend" value={ZAR(totals.forecast)}
+              sub={overBudget ? "tracking over" : "within budget"}
+              tone={overBudget ? T.over : T.good} />
+            <MiniStat T={T} label="Clients" value={byClient.length}
+              sub={rows.length + " campaigns"} />
+          </div>
+          <div style={{ marginTop: 14 }}>
+            <Gauge pct={pctSpent} kind="under" T={T} h={9} />
+            <div style={{ fontSize: 10.5, color: T.inkFaint, marginTop: 5 }}>
+              Portfolio spend pace
+            </div>
+          </div>
+        </Tile>
+
+        {/* status quintet — small tiles */}
+        {Object.entries(STATUS).map(([k, s]) => (
+          <Tile T={T} key={k} accent={T[s.key]} pad={14}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <s.Icon size={13} color={T[s.key]} strokeWidth={2.6}
+                fill={k === "pending" ? T[s.key] : "none"} />
+              <Eyebrow T={T}>{s.label}</Eyebrow>
+            </div>
+            <div className="vt-serif" style={{
+              fontSize: 38, fontWeight: 600, lineHeight: 1, marginTop: "auto",
+              color: counts[k] > 0 && (k === "over" || k === "broken")
+                ? T[s.key] : T.ink,
+            }}>{counts[k]}</div>
+          </Tile>
+        ))}
+
+        {/* worst offender callout */}
+        {topAlert && (
+          <Tile T={T} span={1} pad={14} accent={T[STATUS[topAlert._k].key]}
+            onClick={() => setDetail(topAlert)}>
+            <Eyebrow T={T} color={T[STATUS[topAlert._k].key]}>Watch first</Eyebrow>
+            <div className="vt-serif" style={{ fontSize: 15, fontWeight: 600,
+              marginTop: 6, lineHeight: 1.15 }}>{topAlert.client}</div>
+            <div style={{ fontSize: 10.5, color: T.inkSoft, marginTop: 2 }}>
+              {topAlert.platform}</div>
+            <div style={{ marginTop: "auto", paddingTop: 8,
+              fontSize: 19, fontWeight: 700, fontFamily: "'Fraunces',serif",
+              color: T[STATUS[topAlert._k].key] }}>
+              {topAlert._k === "broken" ? "Error" : PCT(topAlert.forecastPct)}
+            </div>
+          </Tile>
+        )}
+      </div>
+
+      {/* ===== ALERTS STRIP ===== */}
+      {alerts.length > 0 && (
+        <section style={{ marginBottom: 28 }}>
+          <SectionHead T={T} title="Priority alerts"
+            note={`${alerts.length} campaigns drifting from plan`} />
+          <div style={{
+            display: "grid", gap: 10,
+            gridTemplateColumns: "repeat(auto-fill, minmax(248px, 1fr))",
+          }}>
+            {alerts.map((r, i) => (
+              <AlertCard key={i} r={r} T={T} onClick={() => setDetail(r)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ===== FULL TABLE ===== */}
+      <section>
+        <div style={{ display: "flex", justifyContent: "space-between",
+          alignItems: "flex-end", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+          <SectionHead T={T} title="All campaigns" inline />
+          <SearchBox T={T} q={q} setQ={setQ} />
+        </div>
+        <DataTable T={T} {...{ filtered, sortKey, sortDir, setSort, setDetail }} />
+      </section>
+    </>
+  );
+}
+
+function MiniStat({ T, label, value, sub, tone }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontSize: 10, color: T.inkFaint, letterSpacing: .8,
+        textTransform: "uppercase", fontWeight: 600 }}>{label}</div>
+      <div className="vt-serif" style={{ fontSize: 22, fontWeight: 600,
+        marginTop: 3, color: tone || T.ink, fontVariantNumeric: "tabular-nums" }}>
+        {value}</div>
+      <div style={{ fontSize: 10.5, color: T.inkSoft, marginTop: 1 }}>{sub}</div>
+    </div>
+  );
+}
+
+function AlertCard({ r, T, onClick }) {
+  const s = STATUS[r._k], col = T[s.key];
+  return (
+    <button onClick={onClick} className="vt-tile vt-tile-i" style={{
+      textAlign: "left", background: T.panel,
+      border: `1px solid ${T.line}`, borderLeft: `3px solid ${col}`,
+      borderRadius: 12, padding: 14, display: "flex",
+      flexDirection: "column", gap: 9, boxShadow: T.shadow, color: T.ink,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between",
+        alignItems: "flex-start", gap: 8 }}>
+        <div style={{ minWidth: 0 }}>
+          <div className="vt-serif" style={{ fontWeight: 600, fontSize: 15,
+            lineHeight: 1.1 }}>{r.client}</div>
+          <div style={{ fontSize: 10.5, color: T.inkSoft, marginTop: 2,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {r.campaign}</div>
+        </div>
+        <StatusTag kind={r._k} T={T} />
+      </div>
+      <Gauge pct={r.forecastPct} kind={r._k} T={T} />
+      <div style={{ display: "flex", justifyContent: "space-between",
+        fontSize: 11, color: T.inkSoft, fontVariantNumeric: "tabular-nums" }}>
+        <span>{r.platform} · {ZAR(r.budget)}</span>
+        <span style={{ color: col, fontWeight: 700 }}>
+          {r._k === "broken" ? "Check sheet" : "Forecast " + PCT(r.forecastPct)}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+/* ====================== SHARED BITS ====================== */
+function SectionHead({ T, title, note, inline }) {
+  return (
+    <div style={{ marginBottom: inline ? 0 : 13 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+        <h2 className="vt-serif" style={{ margin: 0, fontSize: 23,
+          fontWeight: 600, letterSpacing: -.4 }}>{title}</h2>
+        {note && <span style={{ fontSize: 12, color: T.inkFaint }}>{note}</span>}
+      </div>
+      {!inline && <div style={{ height: 2, background: T.ink, width: 32,
+        marginTop: 7 }} />}
+    </div>
+  );
+}
+
+function SearchBox({ T, q, setQ }) {
+  return (
+    <div style={{ position: "relative" }}>
+      <Search size={14} style={{ position: "absolute", left: 11, top: 10,
+        color: T.inkFaint }} />
+      <input value={q} onChange={(e) => setQ(e.target.value)}
+        placeholder="Search client, campaign, manager…"
+        style={{
+          background: T.panel, border: `1.5px solid ${T.line}`, color: T.ink,
+          borderRadius: 999, padding: "8px 14px 8px 32px", fontSize: 12.5,
+          width: 252, outline: "none", fontFamily: "inherit",
+        }} />
+    </div>
+  );
+}
+
+function DataTable({ T, filtered, sortKey, sortDir, setSort, setDetail }) {
+  const cols = [
+    { k: "client", label: "Client", w: "17%" },
+    { k: "campaign", label: "Campaign", w: "23%" },
+    { k: "platform", label: "Platform", w: "10%" },
+    { k: "budget", label: "Budget", w: "11%", num: true },
+    { k: "cost", label: "Spent", w: "11%", num: true },
+    { k: "forecastPct", label: "Pacing", w: "16%", num: true },
+    { k: "_k", label: "Status", w: "12%" },
+  ];
+  return (
+    <div style={{ background: T.panel, border: `1px solid ${T.line}`,
+      borderRadius: 14, overflow: "hidden", boxShadow: T.shadow }}>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse",
+          fontSize: 12.5, minWidth: 780 }}>
+          <thead>
+            <tr style={{ background: T.panelAlt }}>
+              {cols.map((c) => (
+                <th key={c.k} onClick={() => c.k !== "_k" && setSort(c.k)}
+                  style={{
+                    textAlign: c.num ? "right" : "left", padding: "11px 15px",
+                    width: c.w, fontSize: 10, fontWeight: 700, color: T.inkSoft,
+                    textTransform: "uppercase", letterSpacing: 1,
+                    cursor: c.k !== "_k" ? "pointer" : "default", whiteSpace: "nowrap",
+                  }}>
+                  <span style={{ display: "inline-flex", alignItems: "center",
+                    gap: 4, justifyContent: c.num ? "flex-end" : "flex-start" }}>
+                    {c.label}
+                    {c.k !== "_k" && <ArrowUpDown size={10}
+                      color={sortKey === c.k ? T.accent : T.inkFaint} />}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((r, i) => (
+              <tr key={i} className="vt-row" onClick={() => setDetail(r)}
+                style={{ borderTop: `1px solid ${T.lineSoft}`, cursor: "pointer" }}>
+                <td style={{ padding: "10px 15px", fontWeight: 600 }}>
+                  {r.client}
+                  {r.am && <span style={{ color: T.inkFaint, fontWeight: 400 }}>
+                    {" · "}{r.am}</span>}
+                </td>
+                <td style={{ padding: "10px 15px", color: T.inkSoft,
+                  maxWidth: 0, overflow: "hidden", textOverflow: "ellipsis",
+                  whiteSpace: "nowrap" }}>{r.campaign}</td>
+                <td style={{ padding: "10px 15px", color: T.inkSoft }}>
+                  {r.platform}</td>
+                <td style={{ padding: "10px 15px", textAlign: "right",
+                  fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>
+                  {ZAR(r.budget)}</td>
+                <td style={{ padding: "10px 15px", textAlign: "right",
+                  fontVariantNumeric: "tabular-nums", color: T.inkSoft }}>
+                  {ZAR(r.cost)}</td>
+                <td style={{ padding: "10px 15px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8,
+                    justifyContent: "flex-end" }}>
+                    <span style={{ fontVariantNumeric: "tabular-nums",
+                      fontWeight: 700, color: T[STATUS[r._k].key],
+                      minWidth: 36, textAlign: "right" }}>
+                      {r.forecastPct ? PCT(r.forecastPct) : "—"}</span>
+                    <div style={{ width: 64 }}>
+                      <Gauge pct={r.forecastPct} kind={r._k} T={T} h={6} /></div>
+                  </div>
+                </td>
+                <td style={{ padding: "10px 15px" }}>
+                  <StatusTag kind={r._k} T={T} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {filtered.length === 0 && (
+        <div style={{ padding: 34, textAlign: "center", color: T.inkFaint,
+          fontSize: 13 }}>No campaigns match your search.</div>
+      )}
+    </div>
+  );
+}
+
+/* ====================== BUDGET VIEW ====================== */
+function BudgetView({ T, byClient, totals, overBudget, setDetail }) {
+  const data = byClient.map((c) => ({
+    name: c.client.length > 15 ? c.client.slice(0, 14) + "…" : c.client,
+    Budget: Math.round(c.budget), Spent: Math.round(c.cost),
+  }));
+  const biggest = byClient[0];
+  const mostSpent = [...byClient].sort((a, b) => b.cost - a.cost)[0];
+
+  return (
+    <>
+      {/* bento summary row */}
+      <div style={{
+        display: "grid", gap: 12, marginBottom: 24,
+        gridTemplateColumns: "repeat(6, 1fr)", gridAutoRows: "minmax(110px,auto)",
+      }}>
+        <Tile T={T} span={2} pad={20}>
+          <Eyebrow T={T} color={T.accent}>Largest budget</Eyebrow>
+          <div className="vt-serif" style={{ fontSize: 30, fontWeight: 600,
+            marginTop: "auto", letterSpacing: -.5 }}>{biggest.client}</div>
+          <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 2,
+            fontVariantNumeric: "tabular-nums" }}>
+            {ZAR(biggest.budget)} across {biggest.n} campaigns</div>
+        </Tile>
+        <Tile T={T} span={2} pad={20}>
+          <Eyebrow T={T}>Total spent to date</Eyebrow>
+          <div className="vt-serif" style={{ fontSize: 38, fontWeight: 600,
+            marginTop: "auto", letterSpacing: -1, fontVariantNumeric: "tabular-nums" }}>
+            {ZAR(totals.cost)}</div>
+          <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
+            {PCT(totals.cost / totals.budget)} of R{Math.round(totals.budget/1000)}k budget</div>
+        </Tile>
+        <Tile T={T} span={2} pad={20} accent={overBudget ? T.over : T.good}>
+          <Eyebrow T={T} color={overBudget ? T.over : T.good}>Forecast outcome</Eyebrow>
+          <div className="vt-serif" style={{ fontSize: 38, fontWeight: 600,
+            marginTop: "auto", letterSpacing: -1, color: overBudget ? T.over : T.good,
+            fontVariantNumeric: "tabular-nums" }}>{ZAR(totals.forecast)}</div>
+          <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
+            {overBudget
+              ? `R${Math.round((totals.forecast-totals.budget)/1000)}k over allocated`
+              : "tracking within allocated budget"}</div>
+        </Tile>
+      </div>
+
+      {/* chart */}
+      <SectionHead T={T} title="Budget vs spend by client"
+        note="allocated vs spent to date" />
+      <Tile T={T} span={1} pad={16}>
+        <ResponsiveContainer width="100%" height={Math.max(300, byClient.length * 31)}>
+          <BarChart data={data} layout="vertical"
+            margin={{ left: 6, right: 26, top: 4, bottom: 4 }}>
+            <XAxis type="number" stroke={T.inkFaint} fontSize={10.5}
+              tickFormatter={(v) => "R" + v / 1000 + "k"}
+              axisLine={{ stroke: T.line }} tickLine={false} />
+            <YAxis type="category" dataKey="name" stroke={T.inkSoft}
+              fontSize={11} width={112} axisLine={false} tickLine={false} />
+            <Tooltip cursor={{ fill: T.panelAlt }}
+              contentStyle={{ background: T.panel, border: `1px solid ${T.line}`,
+                borderRadius: 10, fontSize: 12, fontFamily: "Inter",
+                color: T.ink, boxShadow: T.shadow }}
+              formatter={(v) => ZAR(v)} />
+            <Bar dataKey="Budget" fill={T.lineSoft} radius={[0, 4, 4, 0]} barSize={8} />
+            <Bar dataKey="Spent" fill={T.accent} radius={[0, 4, 4, 0]} barSize={8} />
+          </BarChart>
+        </ResponsiveContainer>
+        <div style={{ display: "flex", gap: 18, paddingTop: 8, fontSize: 11,
+          color: T.inkSoft }}>
+          <Legend T={T} color={T.lineSoft} label="Allocated budget" />
+          <Legend T={T} color={T.accent} label="Spent to date" />
+        </div>
+      </Tile>
+
+      {/* client tiles */}
+      <div style={{ marginTop: 24 }}>
+        <SectionHead T={T} title="Every client at a glance" />
+        <div style={{ display: "grid", gap: 11,
+          gridTemplateColumns: "repeat(auto-fill, minmax(232px, 1fr))" }}>
+          {byClient.map((c) => {
+            const used = c.cost / c.budget;
+            return (
+              <Tile T={T} key={c.client} pad={15}>
+                <div style={{ display: "flex", justifyContent: "space-between",
+                  alignItems: "center", gap: 8 }}>
+                  <span className="vt-serif" style={{ fontWeight: 600,
+                    fontSize: 16 }}>{c.client}</span>
+                  {c.flags > 0 && (
+                    <span style={{ display: "inline-flex", alignItems: "center",
+                      gap: 3, fontSize: 10.5, color: T.broken, fontWeight: 700 }}>
+                      <AlertTriangle size={11} /> {c.flags}</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 10.5, color: T.inkFaint, marginTop: 1 }}>
+                  {c.n} campaign{c.n > 1 ? "s" : ""}</div>
+                <div style={{ display: "flex", justifyContent: "space-between",
+                  margin: "12px 0 7px", fontVariantNumeric: "tabular-nums" }}>
+                  <div>
+                    <div style={{ fontSize: 9.5, color: T.inkFaint,
+                      letterSpacing: .6, textTransform: "uppercase" }}>Budget</div>
+                    <div className="vt-serif" style={{ fontSize: 18,
+                      fontWeight: 600 }}>{ZAR(c.budget)}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 9.5, color: T.inkFaint,
+                      letterSpacing: .6, textTransform: "uppercase" }}>Spent</div>
+                    <div className="vt-serif" style={{ fontSize: 18,
+                      fontWeight: 600, color: T.accent }}>{ZAR(c.cost)}</div>
+                  </div>
+                </div>
+                <Gauge pct={used} kind={used > 1 ? "over" : "under"} T={T} h={7} />
+                <div style={{ fontSize: 10.5, color: T.inkFaint, marginTop: 5 }}>
+                  {PCT(used)} of budget used</div>
+              </Tile>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Legend({ T, color, label }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+      <span style={{ width: 18, height: 8, borderRadius: 3, background: color }} />
+      {label}</span>
+  );
+}
+
+/* ====================== COST VIEW ====================== */
+function CostView({ T, rows, setDetail }) {
+  const withT = rows.filter((r) =>
+    r.targetCost != null && r.costPerResult != null && r.cost > 0);
+  const noT = rows.length - withT.length;
+  const sorted = [...withT].sort((a, b) =>
+    (b.costPerResult / b.targetCost) - (a.costPerResult / a.targetCost));
+  const onTgt = withT.filter((r) => r.costPerResult / r.targetCost <= 1.05).length;
+  const overTgt = withT.length - onTgt;
+  const worst = sorted[0];
+
+  const chart = sorted.map((r) => ({
+    label: `${r.client} · ${r.okr}`,
+    ratio: +(r.costPerResult / r.targetCost).toFixed(2),
+    over: r.costPerResult / r.targetCost > 1.05,
+  }));
+
+  return (
+    <>
+      <div style={{
+        display: "grid", gap: 12, marginBottom: 24,
+        gridTemplateColumns: "repeat(6, 1fr)", gridAutoRows: "minmax(110px,auto)",
+      }}>
+        <Tile T={T} span={3} pad={22}>
+          <Eyebrow T={T} color={T.accent}>How to read this</Eyebrow>
+          <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.55,
+            margin: "8px 0 0" }}>
+            Each campaign's <strong style={{ color: T.ink }}>cost per result</strong>{" "}
+            is compared to the <strong style={{ color: T.ink }}>target cost</strong>{" "}
+            set in the sheet. A ratio of <strong style={{ color: T.ink }}>1.0×</strong>{" "}
+            means exactly on target. Anything past <strong style={{ color: T.over }}>
+            1.05×</strong> is costing more per result than planned.
+            {noT > 0 && ` ${noT} campaigns have no target set and aren't shown here.`}
+          </p>
+        </Tile>
+        <Tile T={T} span={1} pad={16} accent={T.good}>
+          <Eyebrow T={T}>On target</Eyebrow>
+          <div className="vt-serif" style={{ fontSize: 40, fontWeight: 600,
+            marginTop: "auto", color: T.good }}>{onTgt}</div>
+        </Tile>
+        <Tile T={T} span={1} pad={16} accent={T.over}>
+          <Eyebrow T={T}>Over target</Eyebrow>
+          <div className="vt-serif" style={{ fontSize: 40, fontWeight: 600,
+            marginTop: "auto", color: T.over }}>{overTgt}</div>
+        </Tile>
+        {worst && (
+          <Tile T={T} span={1} pad={16} accent={T.over}
+            onClick={() => setDetail(worst)}>
+            <Eyebrow T={T} color={T.over}>Worst ratio</Eyebrow>
+            <div className="vt-serif" style={{ fontSize: 26, fontWeight: 600,
+              marginTop: "auto", color: T.over }}>
+              {(worst.costPerResult / worst.targetCost).toFixed(1)}×</div>
+            <div style={{ fontSize: 10.5, color: T.inkSoft }}>{worst.client}</div>
+          </Tile>
+        )}
+      </div>
+
+      <SectionHead T={T} title="Cost per result vs target"
+        note="bars past the dotted line are over target" />
+      <Tile T={T} span={1} pad={16}>
+        <ResponsiveContainer width="100%" height={Math.max(260, chart.length * 33)}>
+          <BarChart data={chart} layout="vertical"
+            margin={{ left: 6, right: 34, top: 4, bottom: 4 }}>
+            <XAxis type="number" stroke={T.inkFaint} fontSize={10.5}
+              tickFormatter={(v) => v + "×"} domain={[0, "auto"]}
+              axisLine={{ stroke: T.line }} tickLine={false} />
+            <YAxis type="category" dataKey="label" stroke={T.inkSoft}
+              fontSize={10.5} width={158} axisLine={false} tickLine={false} />
+            <Tooltip cursor={{ fill: T.panelAlt }}
+              contentStyle={{ background: T.panel, border: `1px solid ${T.line}`,
+                borderRadius: 10, fontSize: 12, color: T.ink, boxShadow: T.shadow }}
+              formatter={(v) => [v + "× of target", "Cost ratio"]} />
+            <ReferenceLine x={1} stroke={T.inkFaint} strokeDasharray="4 4" />
+            <Bar dataKey="ratio" radius={[0, 4, 4, 0]} barSize={13}>
+              {chart.map((d, i) => (
+                <Cell key={i} fill={d.over ? T.over : T.good} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Tile>
+
+      <div style={{ marginTop: 24 }}>
+        <SectionHead T={T} title="Detail — target vs actual" />
+        <div style={{ background: T.panel, border: `1px solid ${T.line}`,
+          borderRadius: 14, overflow: "hidden", boxShadow: T.shadow }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse",
+              fontSize: 12.5, minWidth: 660 }}>
+              <thead>
+                <tr style={{ background: T.panelAlt }}>
+                  {["Client", "Objective", "Platform", "Target", "Actual", "Ratio"]
+                    .map((h, i) => (
+                    <th key={h} style={{ textAlign: i > 2 ? "right" : "left",
+                      padding: "11px 15px", fontSize: 10, fontWeight: 700,
+                      color: T.inkSoft, textTransform: "uppercase",
+                      letterSpacing: 1 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((r, i) => {
+                  const ratio = r.costPerResult / r.targetCost;
+                  const over = ratio > 1.05;
+                  return (
+                    <tr key={i} className="vt-row" onClick={() => setDetail(r)}
+                      style={{ borderTop: `1px solid ${T.lineSoft}`,
+                        cursor: "pointer" }}>
+                      <td style={{ padding: "10px 15px", fontWeight: 600 }}>
+                        {r.client}</td>
+                      <td style={{ padding: "10px 15px", color: T.inkSoft }}>
+                        {r.okr}</td>
+                      <td style={{ padding: "10px 15px", color: T.inkSoft }}>
+                        {r.platform}</td>
+                      <td style={{ padding: "10px 15px", textAlign: "right",
+                        fontVariantNumeric: "tabular-nums" }}>
+                        {ZAR2(r.targetCost)}</td>
+                      <td style={{ padding: "10px 15px", textAlign: "right",
+                        fontVariantNumeric: "tabular-nums" }}>
+                        {ZAR2(r.costPerResult)}</td>
+                      <td style={{ padding: "10px 15px", textAlign: "right" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center",
+                          gap: 4, color: over ? T.over : T.good, fontWeight: 700,
+                          fontVariantNumeric: "tabular-nums" }}>
+                          {over ? <ArrowUp size={12} /> : <Check size={12} />}
+                          {ratio.toFixed(2)}×</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ====================== TEAM VIEW ====================== */
+/* Account-manager performance. "Distance to target" = how far a manager's
+   campaigns sit from the 100%-of-plan ideal. The roster block has no
+   cost-per-result targets, so pacing accuracy is the meaningful target. */
+function TeamView({ T, rows, setDetail }) {
+  const team = useMemo(() => {
+    const m = {};
+    rows.forEach((r) => {
+      const am = (r.am || "").trim();
+      if (!am) return;
+      if (!m[am]) m[am] = {
+        am, n: 0, budget: 0, cost: 0, forecast: 0,
+        pacings: [], over: 0, under: 0, onTarget: 0, pending: 0, broken: 0,
+        campaigns: [],
+      };
+      const t = m[am];
+      t.n++; t.budget += r.budget || 0; t.cost += r.cost || 0;
+      if (r.forecastSpend != null) t.forecast += r.forecastSpend;
+      if (r.forecastPct) t.pacings.push(r.forecastPct);
+      t[r._k]++;
+      t.campaigns.push(r);
+    });
+    return Object.values(m).map((t) => {
+      const avg = t.pacings.length
+        ? t.pacings.reduce((a, b) => a + b, 0) / t.pacings.length : null;
+      // distance from the 100% ideal — over OR under both count as drift
+      const drift = avg == null ? null : Math.abs(avg - 1);
+      const live = t.over + t.under + t.onTarget; // campaigns with real data
+      const accurate = live ? t.onTarget / live : null;
+      return { ...t, avg, drift, accurate, live };
+    }).sort((a, b) => b.budget - a.budget);
+  }, [rows]);
+
+  const ranked = [...team].filter((t) => t.drift != null)
+    .sort((a, b) => a.drift - b.drift);
+  const bestAccuracy = ranked[0];
+  const needsCoaching = [...ranked].reverse()[0];
+  const biggest = team[0];
+  const totalManagers = team.length;
+  const totalManaged = team.reduce((s, t) => s + t.budget, 0);
+
+  function driftLabel(d) {
+    if (d == null) return "No data yet";
+    if (d <= 0.05) return "On plan";
+    if (d <= 0.12) return "Slight drift";
+    return "Off plan";
+  }
+  function driftKind(d) {
+    if (d == null) return "pending";
+    if (d <= 0.05) return "onTarget";
+    if (d <= 0.12) return "under";
+    return "over";
+  }
+
+  return (
+    <>
+      {/* bento summary */}
+      <div style={{
+        display: "grid", gap: 12, marginBottom: 24,
+        gridTemplateColumns: "repeat(6, 1fr)", gridAutoRows: "minmax(112px,auto)",
+      }}>
+        <Tile T={T} span={2} rowSpan={1} pad={20}>
+          <Eyebrow T={T} color={T.accent}>Account managers</Eyebrow>
+          <div className="vt-serif" style={{ fontSize: 52, fontWeight: 600,
+            marginTop: "auto", lineHeight: 1, letterSpacing: -1.5 }}>
+            {totalManagers}</div>
+          <div style={{ fontSize: 11.5, color: T.inkSoft, marginTop: 3,
+            fontVariantNumeric: "tabular-nums" }}>
+            managing {ZAR(totalManaged)} in roster campaigns</div>
+        </Tile>
+        <Tile T={T} span={2} pad={20} accent={T.good}>
+          <Eyebrow T={T} color={T.good}>Closest to plan</Eyebrow>
+          <div className="vt-serif" style={{ fontSize: 28, fontWeight: 600,
+            marginTop: "auto", letterSpacing: -.5 }}>
+            {bestAccuracy ? bestAccuracy.am : "—"}</div>
+          <div style={{ fontSize: 11.5, color: T.inkSoft, marginTop: 2 }}>
+            {bestAccuracy
+              ? `avg pacing ${PCT(bestAccuracy.avg)} · ${bestAccuracy.n} campaign${bestAccuracy.n > 1 ? "s" : ""}`
+              : ""}</div>
+        </Tile>
+        <Tile T={T} span={2} pad={20} accent={T.over}>
+          <Eyebrow T={T} color={T.over}>Furthest off plan</Eyebrow>
+          <div className="vt-serif" style={{ fontSize: 28, fontWeight: 600,
+            marginTop: "auto", letterSpacing: -.5 }}>
+            {needsCoaching ? needsCoaching.am : "—"}</div>
+          <div style={{ fontSize: 11.5, color: T.inkSoft, marginTop: 2 }}>
+            {needsCoaching
+              ? `avg pacing ${PCT(needsCoaching.avg)} · ${PCT(needsCoaching.drift)} from target`
+              : ""}</div>
+        </Tile>
+      </div>
+
+      {/* explainer */}
+      <div style={{
+        background: T.accentSoft, border: `1px solid ${T.line}`,
+        borderRadius: 12, padding: "12px 16px", marginBottom: 22,
+        fontSize: 12.5, color: T.inkSoft, lineHeight: 1.55,
+        display: "flex", gap: 9,
+      }}>
+        <Circle size={14} fill={T.accent} color={T.accent}
+          style={{ flexShrink: 0, marginTop: 2 }} />
+        <span>
+          <strong style={{ color: T.ink }}>Distance to target</strong> measures how
+          far a manager's campaigns sit from the ideal{" "}
+          <strong style={{ color: T.ink }}>100% of plan</strong> — spending over{" "}
+          <em>or</em> under both count as drift. The roster campaigns don't carry
+          cost-per-result targets in the sheet, so pacing accuracy is the
+          meaningful target here.
+        </span>
+      </div>
+
+      {/* leaderboard */}
+      <SectionHead T={T} title="Manager leaderboard"
+        note="ranked by distance from 100% of plan" />
+      <div style={{ display: "grid", gap: 11,
+        gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))" }}>
+        {team.map((t) => {
+          const dk = driftKind(t.drift);
+          const col = T[STATUS[dk].key];
+          // gauge: 0 drift = full/perfect; show how close to target
+          const closeness = t.drift == null ? 0
+            : Math.max(0, 1 - Math.min(t.drift, 0.4) / 0.4);
+          return (
+            <Tile T={T} key={t.am} pad={16} accent={col}>
+              {/* header */}
+              <div style={{ display: "flex", justifyContent: "space-between",
+                alignItems: "flex-start", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: 999, flexShrink: 0,
+                    background: T.accentSoft, color: T.accent,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 16,
+                  }}>{t.am.slice(0, 1).toUpperCase()}</div>
+                  <div>
+                    <div className="vt-serif" style={{ fontWeight: 600,
+                      fontSize: 17, lineHeight: 1, textTransform: "capitalize" }}>
+                      {t.am}</div>
+                    <div style={{ fontSize: 10.5, color: T.inkFaint,
+                      marginTop: 2 }}>
+                      {t.n} campaign{t.n > 1 ? "s" : ""}</div>
+                  </div>
+                </div>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  background: T[STATUS[dk].key + "Bg"], color: col,
+                  fontWeight: 600, fontSize: 10.5, padding: "3px 8px",
+                  borderRadius: 999, whiteSpace: "nowrap",
+                }}>
+                  {driftLabel(t.drift)}</span>
+              </div>
+
+              {/* the big metric — avg pacing */}
+              <div style={{ display: "flex", alignItems: "baseline",
+                justifyContent: "space-between", marginTop: 14 }}>
+                <div>
+                  <div style={{ fontSize: 9.5, color: T.inkFaint, letterSpacing: .6,
+                    textTransform: "uppercase", fontWeight: 600 }}>
+                    Avg pacing</div>
+                  <div className="vt-serif" style={{ fontSize: 34, fontWeight: 700,
+                    lineHeight: 1, color: col, fontVariantNumeric: "tabular-nums" }}>
+                    {t.avg == null ? "—" : PCT(t.avg)}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 9.5, color: T.inkFaint, letterSpacing: .6,
+                    textTransform: "uppercase", fontWeight: 600 }}>
+                    From target</div>
+                  <div className="vt-serif" style={{ fontSize: 22, fontWeight: 600,
+                    lineHeight: 1, marginTop: 3, fontVariantNumeric: "tabular-nums" }}>
+                    {t.drift == null ? "—"
+                      : (t.avg >= 1 ? "+" : "−") + PCT(t.drift)}</div>
+                </div>
+              </div>
+
+              {/* closeness-to-target gauge */}
+              <div style={{ marginTop: 12 }}>
+                <div style={{ position: "relative", height: 8,
+                  background: T.panelAlt, borderRadius: 99,
+                  border: `1px solid ${T.lineSoft}` }}>
+                  <div style={{ height: "100%", width: `${closeness * 100}%`,
+                    background: col, borderRadius: 99,
+                    transition: "width .5s ease" }} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between",
+                  fontSize: 9.5, color: T.inkFaint, marginTop: 4 }}>
+                  <span>Off plan</span><span>On target</span>
+                </div>
+              </div>
+
+              {/* budget + status chips */}
+              <div style={{ display: "flex", justifyContent: "space-between",
+                alignItems: "center", marginTop: 13, paddingTop: 12,
+                borderTop: `1px solid ${T.lineSoft}` }}>
+                <div>
+                  <div style={{ fontSize: 9.5, color: T.inkFaint, letterSpacing: .6,
+                    textTransform: "uppercase", fontWeight: 600 }}>
+                    Budget managed</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, marginTop: 1,
+                    fontVariantNumeric: "tabular-nums" }}>{ZAR(t.budget)}</div>
+                </div>
+                <div style={{ display: "flex", gap: 5 }}>
+                  {[["over", t.over], ["under", t.under],
+                    ["onTarget", t.onTarget], ["pending", t.pending],
+                    ["broken", t.broken]].map(([k, v]) =>
+                    v > 0 ? (
+                      <span key={k} title={STATUS[k].label} style={{
+                        display: "inline-flex", alignItems: "center", gap: 3,
+                        fontSize: 11, fontWeight: 700, color: T[STATUS[k].key],
+                        fontVariantNumeric: "tabular-nums",
+                      }}>
+                        <span style={{ width: 7, height: 7, borderRadius: 99,
+                          background: T[STATUS[k].key], display: "inline-block" }} />
+                        {v}
+                      </span>
+                    ) : null)}
+                </div>
+              </div>
+
+              {/* campaign list */}
+              <div style={{ marginTop: 11, display: "flex",
+                flexDirection: "column", gap: 1 }}>
+                {t.campaigns.map((r, i) => (
+                  <button key={i} onClick={() => setDetail(r)} style={{
+                    display: "flex", justifyContent: "space-between",
+                    alignItems: "center", gap: 8, textAlign: "left",
+                    background: i % 2 ? T.panelAlt : "transparent",
+                    border: "none", borderRadius: 6, padding: "5px 8px",
+                    cursor: "pointer", color: T.ink, width: "100%",
+                  }}>
+                    <span style={{ fontSize: 11, color: T.inkSoft,
+                      overflow: "hidden", textOverflow: "ellipsis",
+                      whiteSpace: "nowrap", flex: 1 }}>
+                      {r.client} · {r.platform}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700,
+                      fontVariantNumeric: "tabular-nums",
+                      color: T[STATUS[r._k].key], flexShrink: 0 }}>
+                      {r.forecastPct ? PCT(r.forecastPct) : "—"}</span>
+                  </button>
+                ))}
+              </div>
+            </Tile>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/* ====================== DRAWER ====================== */
+function Drawer({ row, T, onClose }) {
+  const r = row, s = STATUS[r._k], col = T[s.key];
+  useEffect(() => {
+    const h = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+  const fields = [
+    ["Platform", r.platform], ["Objective (OKR)", r.okr],
+    ["Account manager", r.am || "—"],
+    ["Budget", ZAR2(r.budget)], ["Spent to date", ZAR2(r.cost)],
+    ["Results", NUM(r.results)],
+    ["Forecast spend", r.forecastSpend == null ? "—" : ZAR2(r.forecastSpend)],
+    ["Days remaining", r.daysRemaining ?? "—"],
+    ["Current daily budget", r.currentDaily == null ? "—" : ZAR2(r.currentDaily)],
+    ["Recommended daily", r.recDaily == null ? "—" : ZAR2(r.recDaily)],
+    ["Target cost / result", r.targetCost == null ? "—" : ZAR2(r.targetCost)],
+    ["Actual cost / result", r.costPerResult == null ? "—" : ZAR2(r.costPerResult)],
+  ];
+  const adjust = r.recDaily != null && r.currentDaily != null &&
+    Math.abs(r.recDaily - r.currentDaily) > 1;
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 100,
+      background: "rgba(20,16,12,.5)", display: "flex",
+      justifyContent: "flex-end" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        width: 392, maxWidth: "93vw", height: "100%", overflowY: "auto",
+        background: T.paper, borderLeft: `1px solid ${T.line}`, padding: "22px 24px",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between",
+          alignItems: "flex-start" }}>
+          <StatusTag kind={r._k} T={T} big />
+          <button onClick={onClose} style={iconBtn(T)} aria-label="Close">
+            <X size={15} /></button>
+        </div>
+        <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1.6,
+          color: T.accent, textTransform: "uppercase", marginTop: 16 }}>
+          {r.client}</div>
+        <h3 className="vt-serif" style={{ margin: "3px 0 0", fontSize: 24,
+          fontWeight: 600, lineHeight: 1.12, letterSpacing: -.4 }}>{r.campaign}</h3>
+
+        {r.forecastPct ? (
+          <div style={{ margin: "18px 0 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between",
+              alignItems: "baseline", marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: T.inkSoft }}>
+                Forecast pacing</span>
+              <span className="vt-serif" style={{ fontSize: 24, fontWeight: 700,
+                color: col }}>{PCT(r.forecastPct)}</span>
+            </div>
+            <Gauge pct={r.forecastPct} kind={r._k} T={T} h={10} />
+            <div style={{ display: "flex", justifyContent: "space-between",
+              fontSize: 10, color: T.inkFaint, marginTop: 4 }}>
+              <span>0%</span><span>100% target</span><span>140%</span>
+            </div>
+          </div>
+        ) : null}
+
+        {r.comment && (
+          <div style={{ margin: "16px 0 0", padding: "11px 13px",
+            borderRadius: 10, background: T[s.key + "Bg"], color: col,
+            fontSize: 12, fontWeight: 500, display: "flex", gap: 8 }}>
+            <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+            {r.comment}</div>
+        )}
+
+        <div style={{ marginTop: 18, border: `1px solid ${T.line}`,
+          borderRadius: 12, overflow: "hidden" }}>
+          {fields.map(([k, v], i) => (
+            <div key={k} style={{ display: "flex", justifyContent: "space-between",
+              padding: "9px 14px", fontSize: 12.5,
+              background: i % 2 ? T.panel : T.panelAlt }}>
+              <span style={{ color: T.inkSoft }}>{k}</span>
+              <span style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                {v}</span>
+            </div>
+          ))}
+        </div>
+
+        {adjust && (
+          <div style={{ marginTop: 16, padding: "13px 15px", borderRadius: 12,
+            background: T.accentSoft, border: `1px solid ${T.line}` }}>
+            <div className="vt-serif" style={{ fontWeight: 600, fontSize: 15,
+              marginBottom: 4, color: T.accent }}>Suggested adjustment</div>
+            <span style={{ fontSize: 12.5, color: T.inkSoft, lineHeight: 1.5 }}>
+              {r.recDaily > r.currentDaily ? "Increase" : "Decrease"} the daily
+              budget from <strong style={{ color: T.ink }}>
+              {ZAR2(r.currentDaily)}</strong> to <strong style={{ color: T.accent }}>
+              {ZAR2(r.recDaily)}</strong> to land on plan.
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ====================== REFRESH MODAL ====================== */
+function RefreshModal({ T, onClose }) {
+  useEffect(() => {
+    const h = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 100,
+      background: "rgba(20,16,12,.5)", display: "flex", alignItems: "center",
+      justifyContent: "center", padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        width: 470, maxWidth: "100%", background: T.paper,
+        border: `1px solid ${T.line}`, borderRadius: 16, padding: "24px 26px",
+        boxShadow: T.shadow }}>
+        <div style={{ display: "flex", justifyContent: "space-between",
+          alignItems: "flex-start" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <RefreshCw size={18} color={T.accent} />
+            <h3 className="vt-serif" style={{ margin: 0, fontSize: 21,
+              fontWeight: 600 }}>Keeping this current</h3>
+          </div>
+          <button onClick={onClose} style={iconBtn(T)} aria-label="Close">
+            <X size={15} /></button>
+        </div>
+        <p style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.6,
+          marginTop: 14 }}>
+          This dashboard holds a <strong style={{ color: T.ink }}>snapshot</strong>{" "}
+          of the VOLT Main Pacing sheet. It can't keep a live two-way link to
+          Google Sheets from inside this view — here are the two ways to refresh:
+        </p>
+        <ol style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.7,
+          paddingLeft: 18, marginTop: 4 }}>
+          <li style={{ marginBottom: 6 }}>
+            When the sheet changes, ask Claude to refresh the dashboard — it
+            re-reads the sheet and rebuilds this view in seconds.</li>
+          <li>For hands-off auto-refresh, connect the sheet to{" "}
+            <strong style={{ color: T.ink }}>Looker Studio</strong> (free, by
+            Google). Your team already uses Looker links in the sheet, so this
+            matches your existing setup.</li>
+        </ol>
+        <div style={{ marginTop: 14, padding: "11px 13px", borderRadius: 10,
+          background: T.brokenBg, color: T.broken, fontSize: 12,
+          display: "flex", gap: 8 }}>
+          <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>The 3 Cosave campaigns show a <strong>data error</strong> — the
+            sheet's end date falls before the data date, so its forecast maths
+            go negative. Worth fixing at the source.</span>
+        </div>
+      </div>
+    </div>
+  );
+}
